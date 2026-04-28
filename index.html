@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>YouTube Link Extractor</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #171a21;
+    --panel-2: #1f242d;
+    --border: #2a3140;
+    --text: #e8ecf3;
+    --muted: #9aa3b2;
+    --accent: #ff3b30;
+    --accent-2: #ff6b60;
+    --ok: #34c759;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 32px 16px;
+  }
+  .container { max-width: 760px; margin: 0 auto; }
+  h1 {
+    font-size: 28px;
+    margin: 0 0 6px;
+    letter-spacing: -0.02em;
+  }
+  .subtitle { color: var(--muted); margin: 0 0 24px; font-size: 14px; }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .instructions h2 {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin: 0 0 12px;
+  }
+  .instructions ul { margin: 0; padding-left: 18px; }
+  .instructions li { margin-bottom: 8px; line-height: 1.5; font-size: 14px; }
+  .instructions code {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12.5px;
+    color: var(--accent-2);
+    word-break: break-all;
+  }
+  .mode-row { display: flex; gap: 8px; margin-bottom: 12px; }
+  .mode-btn {
+    flex: 1;
+    padding: 10px 12px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.15s;
+  }
+  .mode-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+  input[type="text"] {
+    width: 100%;
+    padding: 12px 14px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 14px;
+    margin-bottom: 12px;
+    font-family: inherit;
+  }
+  input[type="text"]:focus { outline: none; border-color: var(--accent); }
+  .submit {
+    width: 100%;
+    padding: 12px;
+    background: var(--accent);
+    border: none;
+    color: white;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .submit:hover:not(:disabled) { background: var(--accent-2); }
+  .submit:disabled { opacity: 0.5; cursor: not-allowed; }
+  .status {
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--muted);
+    min-height: 18px;
+  }
+  .status.error { color: var(--accent-2); }
+  .results { display: none; }
+  .results.active { display: block; }
+  .results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .results-header h2 {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin: 0;
+  }
+  .actions { display: flex; gap: 8px; }
+  .action-btn {
+    padding: 6px 12px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.15s;
+  }
+  .action-btn:hover { border-color: var(--accent); color: var(--accent-2); }
+  .action-btn.copied { background: var(--ok); border-color: var(--ok); color: white; }
+  textarea {
+    width: 100%;
+    height: 280px;
+    padding: 12px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 12.5px;
+    resize: vertical;
+  }
+  textarea:focus { outline: none; border-color: var(--accent); }
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 24px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>YouTube Link Extractor</h1>
+  <p class="subtitle">Paste a playlist or channel URL — get every video link.</p>
+
+  <div class="card instructions">
+    <h2>What to paste</h2>
+    <ul>
+      <li><strong>Playlist:</strong> open the playlist on YouTube and copy the URL from the address bar.<br>
+        Example: <code>https://www.youtube.com/playlist?list=PLxxxxxxxx</code><br>
+        A watch URL with <code>&list=</code> works too.
+      </li>
+      <li><strong>Channel:</strong> open the channel page and copy the URL.<br>
+        Supported formats:
+        <code>youtube.com/@handle</code>,
+        <code>youtube.com/channel/UCxxxxx</code>,
+        <code>youtube.com/user/name</code>.<br>
+        Tip: the <code>@handle</code> URL is the most reliable.
+      </li>
+      <li><strong>Pick the matching mode below</strong> before clicking Extract.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="mode-row">
+      <button type="button" class="mode-btn active" data-mode="playlist">Playlist</button>
+      <button type="button" class="mode-btn" data-mode="channel">Channel</button>
+    </div>
+    <input type="text" id="url" placeholder="Paste YouTube URL here..." autocomplete="off" />
+    <button class="submit" id="submitBtn">Extract video links</button>
+    <div class="status" id="status"></div>
+  </div>
+
+  <div class="card results" id="resultsCard">
+    <div class="results-header">
+      <h2><span id="count">0</span> videos found</h2>
+      <div class="actions">
+        <button class="action-btn" id="copyBtn">Copy all</button>
+        <button class="action-btn" id="downloadBtn">Download .txt</button>
+      </div>
+    </div>
+    <textarea id="output" readonly></textarea>
+  </div>
+
+  <footer>Powered by the YouTube Data API.</footer>
+</div>
+
+<script>
+  const modeButtons = document.querySelectorAll('.mode-btn');
+  const urlInput = document.getElementById('url');
+  const submitBtn = document.getElementById('submitBtn');
+  const statusEl = document.getElementById('status');
+  const resultsCard = document.getElementById('resultsCard');
+  const output = document.getElementById('output');
+  const countEl = document.getElementById('count');
+  const copyBtn = document.getElementById('copyBtn');
+  const downloadBtn = document.getElementById('downloadBtn');
+
+  let mode = 'playlist';
+
+  modeButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      modeButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      mode = btn.dataset.mode;
+    });
+  });
+
+  submitBtn.addEventListener('click', async () => {
+    const url = urlInput.value.trim();
+    if (!url) {
+      setStatus('Please paste a YouTube URL.', true);
+      return;
+    }
+
+    submitBtn.disabled = true;
+    resultsCard.classList.remove('active');
+    setStatus('Fetching videos... this can take a moment for large channels.');
+
+    try {
+      const res = await fetch('/api/extract', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, mode })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setStatus(data.error || 'Something went wrong.', true);
+        return;
+      }
+      const links = data.videos.map(v => v.url);
+      output.value = links.join('\n');
+      countEl.textContent = links.length;
+      resultsCard.classList.add('active');
+      setStatus(`Done. Extracted ${links.length} video${links.length === 1 ? '' : 's'}.`);
+    } catch (err) {
+      setStatus('Network error: ' + err.message, true);
+    } finally {
+      submitBtn.disabled = false;
+    }
+  });
+
+  copyBtn.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(output.value);
+      copyBtn.textContent = 'Copied!';
+      copyBtn.classList.add('copied');
+      setTimeout(() => {
+        copyBtn.textContent = 'Copy all';
+        copyBtn.classList.remove('copied');
+      }, 1500);
+    } catch {
+      output.select();
+      document.execCommand('copy');
+    }
+  });
+
+  downloadBtn.addEventListener('click', () => {
+    const blob = new Blob([output.value], { type: 'text/plain' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'youtube-links.txt';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+
+  function setStatus(msg, isError = false) {
+    statusEl.textContent = msg;
+    statusEl.classList.toggle('error', isError);
+  }
+</script>
+</body>
+</html>
